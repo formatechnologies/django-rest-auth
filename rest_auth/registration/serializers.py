@@ -80,7 +80,7 @@ class SocialLoginSerializer(serializers.Serializer):
         # Case 1: We received the access_token
         if attrs.get('access_token'):
             access_token = attrs.get('access_token')
-            token = {'id_token': access_token}
+            token = {'access_token': access_token}
 
         # Case 2: We received the authorization code
         elif attrs.get('code'):
