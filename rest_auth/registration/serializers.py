@@ -64,12 +64,12 @@ class SocialLoginSerializer(serializers.Serializer):
 
         if not view:
             raise serializers.ValidationError(
-                _("View is not defined, pass it as a context variable")
+                _('View is not defined, pass it as a context variable')
             )
 
         adapter_class = getattr(view, 'adapter_class', None)
         if not adapter_class:
-            raise serializers.ValidationError(_("Define adapter_class in view"))
+            raise serializers.ValidationError(_('Define adapter_class in view'))
 
         adapter = adapter_class(request)
         app = adapter.get_provider().get_app(request)
@@ -80,6 +80,7 @@ class SocialLoginSerializer(serializers.Serializer):
         # Case 1: We received the access_token
         if attrs.get('access_token'):
             access_token = attrs.get('access_token')
+            token = {'access_token': access_token}
 
         # Case 2: We received the authorization code
         elif attrs.get('code'):
@@ -88,11 +89,11 @@ class SocialLoginSerializer(serializers.Serializer):
 
             if not self.callback_url:
                 raise serializers.ValidationError(
-                    _("Define callback_url in view")
+                    _('Define callback_url in view')
                 )
             if not self.client_class:
                 raise serializers.ValidationError(
-                    _("Define client_class in view")
+                    _('Define client_class in view')
                 )
 
             code = attrs.get('code')
@@ -106,23 +107,25 @@ class SocialLoginSerializer(serializers.Serializer):
                 adapter.access_token_method,
                 adapter.access_token_url,
                 self.callback_url,
-                scope
+                scope,
+                key=app.key,
+                cert=app.cert,
             )
             token = client.get_access_token(code)
             access_token = token['access_token']
 
         else:
             raise serializers.ValidationError(
-                _("Incorrect input. access_token or code is required."))
+                _('Incorrect input. access_token or code is required.'))
 
-        social_token = adapter.parse_token({'access_token': access_token})
+        social_token = adapter.parse_token(token)
         social_token.app = app
 
         try:
             login = self.get_social_login(adapter, app, social_token, access_token)
             complete_social_login(request, login)
         except HTTPError:
-            raise serializers.ValidationError(_("Incorrect value"))
+            raise serializers.ValidationError(_('Incorrect value'))
 
         if not login.is_existing:
             # We have an account already signed up in a different flow
@@ -131,19 +134,13 @@ class SocialLoginSerializer(serializers.Serializer):
             # link up the accounts due to security constraints
             if allauth_settings.UNIQUE_EMAIL:
                 # Do we have an account already with this email address?
-                account_exists = get_user_model().objects.filter(
-                    email=login.user.email,
-                ).exists()
-                if account_exists:
-                    raise serializers.ValidationError(
-                        _("User is already registered with this e-mail address.")
-                    )
+                if get_user_model().objects.filter(email=login.user.email).exists():
+                    raise serializers.ValidationError(_('E-mail already registered using different signup method.'))
 
             login.lookup()
             login.save(request, connect=True)
 
         attrs['user'] = login.account.user
-
         return attrs
 
 
