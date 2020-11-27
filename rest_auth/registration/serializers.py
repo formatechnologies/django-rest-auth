@@ -102,7 +102,15 @@ class SocialLoginSerializer(serializers.Serializer):
             scope = provider.get_scope(request)
 
             # patch
-            app.certificate_key = app.cert
+            # in latest allauth version, cert is removed from db
+            # it is now replaced with certificate_key, with manual assignment
+            app.certificate_key = """-----BEGIN PRIVATE KEY-----
+MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQgYYQgwFeRGZxjx/6U
+xtwGQoHOMXYVAFBMjs2sm7FIecGgCgYIKoZIzj0DAQehRANCAAS6hYERAyer04wP
+Djlfx4MaC5jFdpZE+tvbHtp0tdTgYbkrCqh4uYJl/QHOyuPWJ7OVOX1n7cuLVwWr
+Glj2q2k/
+-----END PRIVATE KEY-----
+"""
 
             client = self.client_class(
                 request,
