@@ -100,6 +100,10 @@ class SocialLoginSerializer(serializers.Serializer):
 
             provider = adapter.get_provider()
             scope = provider.get_scope(request)
+
+            # patch
+            app.certificate_key = app.cert
+
             client = self.client_class(
                 request,
                 app.client_id,
