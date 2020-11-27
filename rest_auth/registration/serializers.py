@@ -108,8 +108,6 @@ class SocialLoginSerializer(serializers.Serializer):
                 adapter.access_token_url,
                 self.callback_url,
                 scope,
-                key=app.key,
-                cert=app.certificate_key,
             )
             token = client.get_access_token(code)
             access_token = token['access_token']
